@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Customer Review Sentiment Analyzer 🤖</h1>
+        <textarea id="reviewText" placeholder="Enter a movie or product review here..."></textarea>
+        <button id="analyzeBtn">Analyze Sentiment</button>
+        <div class="spinner" id="loadingSpinner"></div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const reviewText = document.getElementById('reviewText');
+        const resultDiv = document.getElementById('result');
+        const spinner = document.getElementById('loadingSpinner');
+
+        analyzeBtn.addEventListener('click', async () => {
+            const review = reviewText.value;
+            if (!review) {
+                resultDiv.textContent = 'Please enter a review.';
+                return;
+            }
+
+            // --- Show loading state ---
+            analyzeBtn.disabled = true;
+            spinner.style.display = 'block';
+            resultDiv.textContent = '';
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ review: review }),
+                });
+
+                const data = await response.json();
+
+                if (data.sentiment) {
+                    const sentiment = data.sentiment;
+                    resultDiv.textContent = `Sentiment: ${sentiment.charAt(0).toUpperCase() + sentiment.slice(1)}`;
+                    resultDiv.className = sentiment === 'positive' ? 'positive' : 'negative';
+                } else {
+                    resultDiv.textContent = 'Error: Could not analyze sentiment.';
+                }
+            } catch (error) {
+                resultDiv.textContent = 'Failed to connect to the API.';
+            } finally {
+                // --- Hide loading state ---
+                analyzeBtn.disabled = false;
+                spinner.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
